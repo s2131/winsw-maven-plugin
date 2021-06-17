@@ -18,7 +18,6 @@ import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
 import org.eclipse.aether.repository.RemoteRepository;
-import org.twdata.maven.mojoexecutor.MojoExecutor;
 
 import java.io.*;
 import java.nio.charset.Charset;
@@ -48,9 +47,13 @@ public class WinswMojo extends AbstractMojo {
     @SuppressWarnings("unused")
     private File outputDirectory;
 
-    @Parameter(defaultValue = "2.2.0")
+    @Parameter(defaultValue = "2.9.0")
     @SuppressWarnings("unused")
     private String winswVersion;
+
+    @Parameter(defaultValue = "bin")
+    @SuppressWarnings("unused")
+    private String winswClassifier;
 
     @Parameter(defaultValue = "${project.build.finalName}.exe")
     @SuppressWarnings("unused")
@@ -77,10 +80,8 @@ public class WinswMojo extends AbstractMojo {
 
     @Override
     public void execute() throws MojoExecutionException {
-        if (!outputDirectory.exists()) {
-            if (!outputDirectory.mkdirs()) {
-                throw new MojoExecutionException("Could not create " + outputDirectory);
-            }
+        if (!outputDirectory.exists() && !outputDirectory.mkdirs()) {
+            throw new MojoExecutionException("Could not create " + outputDirectory);
         }
 
         processConfigurationFile();
@@ -218,12 +219,12 @@ public class WinswMojo extends AbstractMojo {
 
         getLog().debug(path.toString());
 
-        RemoteRepository winswRepository = new RemoteRepository.Builder("winsw", "default", "http://repo.jenkins-ci.org/releases/").build();
+        RemoteRepository winswRepository = new RemoteRepository.Builder("winsw", "default", "https://repo.jenkins-ci.org/releases/").build();
 
         mavenProject.getRemoteProjectRepositories().add(winswRepository);
 
         try {
-            MojoExecutor.executeMojo(
+            executeMojo(
                     plugin(
                             groupId("com.googlecode.maven-download-plugin"),
                             artifactId("download-maven-plugin"),
@@ -235,7 +236,7 @@ public class WinswMojo extends AbstractMojo {
                             element(name("artifactId"), "winsw"),
                             element(name("version"), winswVersion),
                             element(name("type"), "exe"),
-                            element(name("classifier"), "bin"),
+                            element(name("classifier"), winswClassifier),
                             element(name("outputDirectory"), path.toFile().getParentFile().getAbsolutePath()),
                             element(name("outputFileName"), path.toFile().getName())
                     ),
